@@ -1,0 +1,20 @@
+services:
+  migrations:
+    build:
+      target: migrations
+      context: .
+    working_dir: /app
+    command: ["npx", "prisma", "migrate", "deploy"]
+    volumes:
+      - ./prisma:/app/prisma
+  db:
+    mem_limit: 2048m
+    cpus: 2
+
+    image: postgres:16.4
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "8000:5432"

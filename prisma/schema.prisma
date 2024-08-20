@@ -1,0 +1,33 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-kysely"
+
+  output   = "../src/generated/db"
+  fileName = "types.ts"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// This database we strictly use uuids for primary id fields
+// Camel case is used for table names and columns
+model workers {
+  id         String   @id @default(uuid())
+  name       String   @unique
+  email      String
+  phone      String
+  address    String
+  city       String
+  state      String
+  zip        String
+  country    String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+}
