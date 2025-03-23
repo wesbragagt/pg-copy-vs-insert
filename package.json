@@ -1,7 +1,8 @@
 {
   "type": "module",
   "scripts": {
-    "t": "node src/main.ts"
+    "t": "node src/main.ts",
+    "lint": "oxlint"
   },
   "devDependencies": {
     "@types/node": "^22.4.1",
