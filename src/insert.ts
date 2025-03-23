@@ -75,7 +75,7 @@ export async function handleBulkInsert(batchSize: number) {
   const { db } = new Database()
   // Read from ./workers.csv and insert into the database line by line
   const start = performance.now();
-  const { headers, rows } = extractDataFromCsv(path.join(getCurrentDir(), Files.WORKERS));
+  const { rows } = extractDataFromCsv(path.join(getCurrentDir(), Files.WORKERS));
   logger.info({
     message: 'File read in',
     time: performance.now() - start,

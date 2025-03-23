@@ -51,9 +51,7 @@ export async function handleCopyInsert(){
         country
       ) FROM STDIN WITH (FORMAT csv, DELIMITER ',')
     `.writable();
-    const sourceStream = Readable.from([
-      ...arrayOfObjects.map(o => [o.id, o.name, o.email, o.phone, o.address, o.city, o.state, o.zip, o.country].join(',') + '\n')
-    ])
+    const sourceStream = Readable.from(arrayOfObjects.map(o => [o.id, o.name, o.email, o.phone, o.address, o.city, o.state, o.zip, o.country].join(',') + '\n'))
     const totalChunks = arrayOfObjects.length;
     let processed = 0;
 
@@ -110,9 +108,7 @@ export async function handleCopyUpdate() {
       CREATE TEMP TABLE temp_workers AS SELECT * FROM workers WHERE 1=0;
     `
     const writeableStream = await sql`COPY temp_workers (name, email, phone, address, city, state, zip, country) FROM STDIN WITH (FORMAT csv)`.writable();
-    const sourceStream = Readable.from([
-      ...arrayOfObjects.map(o => `${o.name},${o.email},${o.phone},${o.address},${o.city},${o.state},${o.zip},${o.country}\n`)
-    ])
+    const sourceStream = Readable.from(arrayOfObjects.map(o => `${o.name},${o.email},${o.phone},${o.address},${o.city},${o.state},${o.zip},${o.country}\n`))
     const totalChunks = arrayOfObjects.length;
     let processed = 0;
 

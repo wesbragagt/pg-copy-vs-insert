@@ -1,6 +1,6 @@
 /*
  * Create a function that when called writes to a csv file with 1000000 rows of data */
-import { deduplicateByEmail, getCurrentDir } from './utils.ts'
+import { getCurrentDir } from './utils.ts'
 import { createWorker } from './fake.ts';
 import fs from 'fs';
 import path from 'path';
