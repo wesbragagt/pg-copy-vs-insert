@@ -21,10 +21,11 @@ export function createCSV() {
   ] as const;
 
   const headers = fields.join(',');
-  const data = Array.from({ length: 1000000 }, () => createWorker());
-  const deduplicatedByEmail = deduplicateByEmail(data);
+  const createdWorkers = Array.from({ length: 1000000 }, () => {
+    return createWorker();
+  });
 
-  const csvString = [headers, ...deduplicatedByEmail.map(worker => fields.map(field => worker[field]).join(','))];
+  const csvString = [headers, ...createdWorkers.map(worker => fields.map(field => worker[field]).join(','))];
 
   fs.writeFileSync(path.join(getCurrentDir(), fileName), csvString.join('\n'));
 
@@ -49,7 +50,7 @@ export function createCsvWithDuplicateData(){
 
   const data = Array.from({ length: 1000000 }, () => createWorker());
   const DUPLICATE_EMAIL = 'mscott@dundermifflin.com';
-  // add duplicate email
+  // force duplicate emails
   data[0].email = DUPLICATE_EMAIL;
   data[1].email = DUPLICATE_EMAIL;
 

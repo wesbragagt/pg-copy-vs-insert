@@ -6,7 +6,7 @@ import dotenv from 'dotenv'
 
 dotenv.config();
 
-const PossibleArgs = Object.freeze({
+const Arguments = Object.freeze({
   Insert: "insert",
   BulkInsert: "bulk-insert",
   Copy: "copy",
@@ -14,41 +14,41 @@ const PossibleArgs = Object.freeze({
   CreateCSV: "create-csv",
   CreateCSVWithDups: "create-csv-dups"
 });
-const PossibleArgsValues = Object.values(PossibleArgs);
+const ArgumentValues = Object.values(Arguments);
 
 async function main() {
   if (process.argv.length < 3) {
-    console.log(`Provide a command: ${PossibleArgsValues.join(", ")}`)
+    console.log(`Provide a command: ${ArgumentValues.join(", ")}`)
     process.exit(1)
   }
 
-  if (!Object.values(PossibleArgs).includes(process.argv[2] as any)) {
-    console.log(`Invalid command. Possible commands are: ${PossibleArgsValues.join(", ")}`)
+  if (!Object.values(Arguments).includes(process.argv[2] as any)) {
+    console.log(`Invalid command. Possible commands are: ${ArgumentValues.join(", ")}`)
     process.exit(1)
   }
 
   switch (process.argv[2]) {
-    case PossibleArgs.Insert: {
+    case Arguments.Insert: {
       await handleInsert()
       break;
     }
-    case PossibleArgs.BulkInsert: {
+    case Arguments.BulkInsert: {
       await handleBulkInsert(process.env.BATCH_SIZE ? parseInt(process.env.BATCH_SIZE) : 1)
       break;
     }
-    case PossibleArgs.Copy: {
+    case Arguments.Copy: {
       await handleCopyInsert()
       break;
     }
-    case PossibleArgs.CopyUpdate: {
+    case Arguments.CopyUpdate: {
       await handleCopyUpdate()
       break;
     }
-    case PossibleArgs.CreateCSV: {
+    case Arguments.CreateCSV: {
       createCSV()
       break;
     }
-    case PossibleArgs.CreateCSVWithDups: {
+    case Arguments.CreateCSVWithDups: {
       createCsvWithDuplicateData()
       break;
     }

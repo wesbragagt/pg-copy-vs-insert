@@ -126,6 +126,7 @@ export async function handleCopyUpdate() {
       }
     }, writeableStream)
     logger.info(`Copied data to temp table in ${measureDuration(performance.now() - start)}`);
+    logger.info(`Running update with constraint checks...`);
 
     const startUpdateFromTempAt = performance.now();
     await sql`
