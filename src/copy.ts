@@ -54,12 +54,14 @@ export async function handleCopyInsert(){
     const sourceStream = Readable.from(arrayOfObjects.map(o => [o.id, o.name, o.email, o.phone, o.address, o.city, o.state, o.zip, o.country].join(',') + '\n'))
     const totalChunks = arrayOfObjects.length;
     let processed = 0;
-
+    
     await pipeline(sourceStream, async function*(sourceStream){
       for await (const chunk of sourceStream) {
-        logger.info({
-          msg: `Copy ${processed}/${totalChunks}`,
-        });
+        if (processed % 1000  === 0) {
+          logger.info({
+            msg: `Copy ${processed}/${totalChunks}`,
+          });
+        }
         processed++;
         yield chunk;
       }
