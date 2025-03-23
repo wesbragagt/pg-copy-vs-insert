@@ -15,7 +15,7 @@ import { faker } from '@faker-js/faker';
 export function createWorker() {
   return {
     name: faker.person.fullName(),
-    email: faker.internet.email(),
+    email: `${faker.internet.userName()}@${faker.internet.domainName()}`,
     phone: faker.phone.number(),
     address: faker.location.streetAddress(),
     city: faker.location.city(),

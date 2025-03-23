@@ -16,7 +16,7 @@ export async function handleCopyInsert(){
   const arrayOfObjects = readCsvInMemory.split('\n').slice(1).map((line) => {
     const [name, email, phone, address, city, state, zip, country] = line.split(',');
     return {
-      id: randomUUID(),
+      id: `${randomUUID()}`,
       name,
       email,
       phone,
@@ -27,7 +27,7 @@ export async function handleCopyInsert(){
       country
     }
   }).filter(o => !!o.name);
-
+  
   const sql = postgres(process.env.DATABASE_URL as string, {
     //close a connection that has either been idle for 20 seconds or existed for more than 30 minutes
     idle_timeout: 20,
@@ -38,9 +38,21 @@ export async function handleCopyInsert(){
 
     const start = performance.now();
     logger.info('Copying data to the database');
-    const writeableStream = await sql`COPY workers (id,name, email, phone, address, city, state, zip, country) FROM STDIN WITH (FORMAT csv)`.writable();
+    const writeableStream = await sql`
+      COPY workers (
+        id,
+        name,
+        email,
+        phone,
+        address,
+        city,
+        state,
+        zip,
+        country
+      ) FROM STDIN WITH (FORMAT csv, DELIMITER ',')
+    `.writable();
     const sourceStream = Readable.from([
-      ...arrayOfObjects.map(o => `${o.name},${o.email},${o.phone},${o.address},${o.city},${o.state},${o.zip},${o.country}\n`)
+      ...arrayOfObjects.map(o => [o.id, o.name, o.email, o.phone, o.address, o.city, o.state, o.zip, o.country].join(',') + '\n')
     ])
     const totalChunks = arrayOfObjects.length;
     let processed = 0;
@@ -94,17 +106,8 @@ export async function handleCopyUpdate() {
     const start = performance.now();
     logger.info('Copying data to the database');
     await sql`
-      CREATE TEMP TABLE temp_workers (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        name TEXT NOT NULL,
-        email TEXT NOT NULL,
-        phone TEXT NOT NULL,
-        address TEXT NOT NULL,
-        city TEXT NOT NULL,
-        state TEXT NOT NULL,
-        zip TEXT NOT NULL,
-        country TEXT NOT NULL
-      );
+      -- create temp table with the same structure as target table
+      CREATE TEMP TABLE temp_workers AS SELECT * FROM workers WHERE 1=0;
     `
     const writeableStream = await sql`COPY temp_workers (name, email, phone, address, city, state, zip, country) FROM STDIN WITH (FORMAT csv)`.writable();
     const sourceStream = Readable.from([
@@ -129,7 +132,7 @@ export async function handleCopyUpdate() {
       INSERT INTO workers (id,name, email, phone, address, city, state, zip, country)
       SELECT gen_random_uuid(),name, email, phone, address, city, state, zip, country
       FROM temp_workers
-      ON CONFLICT (name) DO NOTHING
+      ON CONFLICT (email) DO NOTHING
     `
     logger.info(`Ran update from temp table in ${measureDuration(performance.now() - startUpdateFromTempAt)}`);
 

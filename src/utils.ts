@@ -1,3 +1,5 @@
+import type { CreateWorker } from "./interfaces.ts";
+
 export function measureDuration(milliseconds: number) /*hh:mm:ss*/ {
   const isLessThanHours = milliseconds < 3600000;
   const isLessThanMinutes = milliseconds < 60000;
@@ -17,4 +19,14 @@ export function measureDuration(milliseconds: number) /*hh:mm:ss*/ {
 
 export function getCurrentDir(){
   return new URL('.', import.meta.url).pathname
+}
+
+/**
+ * Efficiently checks reduces duplicates from the array */
+export function deduplicateByEmail(w: CreateWorker[]){
+  const emailMap = new Map<string, CreateWorker>();
+  for (const worker of w) {
+    emailMap.set(worker.email, worker);
+  }
+  return Array.from(emailMap.values());
 }

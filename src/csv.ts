@@ -1,6 +1,6 @@
 /*
  * Create a function that when called writes to a csv file with 1000000 rows of data */
-import { getCurrentDir } from './utils.ts'
+import { deduplicateByEmail, getCurrentDir } from './utils.ts'
 import { createWorker } from './fake.ts';
 import fs from 'fs';
 import path from 'path';
@@ -22,8 +22,9 @@ export function createCSV() {
 
   const headers = fields.join(',');
   const data = Array.from({ length: 1000000 }, () => createWorker());
+  const deduplicatedByEmail = deduplicateByEmail(data);
 
-  const csvString = [headers, ...data.map(worker => fields.map(field => worker[field]).join(','))];
+  const csvString = [headers, ...deduplicatedByEmail.map(worker => fields.map(field => worker[field]).join(','))];
 
   fs.writeFileSync(path.join(getCurrentDir(), fileName), csvString.join('\n'));
 

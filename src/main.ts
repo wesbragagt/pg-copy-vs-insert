@@ -38,6 +38,7 @@ async function main() {
     }
     case PossibleArgs.Copy: {
       await handleCopyInsert()
+      break;
     }
     case PossibleArgs.CopyUpdate: {
       await handleCopyUpdate()
