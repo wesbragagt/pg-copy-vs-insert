@@ -163,3 +163,96 @@ export async function handleBulkInsert(batchSize: number) {
     await db.destroy();
   }
 }
+
+/**
+ * Uses a controlled parallel processing approach where it processes concurrency number of batches simultaneously */
+export async function handleBulkInsertParallel(batchSize: number, concurrency: number) {
+  const { db } = new Database()
+  // Read from ./workers.csv and insert into the database line by line
+  const start = performance.now();
+  const { rows } = extractDataFromCsv(path.join(getCurrentDir(), Files.WORKERS));
+  logger.info({
+    message: 'File read in',
+    time: performance.now() - start,
+  }, 'File read in: ' + (performance.now() - start) + 'ms');
+
+  try {
+    await db.executeQuery(sql`TRUNCATE TABLE workers`.compile(db));
+    logger.info("Table truncated");
+
+    let processed = 0;
+    const durations: number[] = [];
+    const start = performance.now();
+
+    // Split rows into batches
+    const batches: Omit<Selectable<workers>, 'id' | 'updated_at' | 'created_at'>[][] = [];
+    let currentBatch: Omit<Selectable<workers>, 'id' | 'updated_at' | 'created_at'>[] = [];
+
+    for (const row of rows) {
+      const [
+        name,
+        email,
+        phone,
+        address,
+        city,
+        state,
+        zip,
+        country
+      ] = row.split(',');
+
+      currentBatch.push({
+        name,
+        email,
+        phone,
+        address,
+        city,
+        state,
+        zip,
+        country,
+      });
+
+      if (currentBatch.length === batchSize) {
+        batches.push(currentBatch);
+        currentBatch = [];
+      }
+    }
+
+    if (currentBatch.length > 0) {
+      batches.push(currentBatch);
+    }
+
+    // Process batches in parallel with controlled concurrency
+    const processBatch = async (batch: typeof currentBatch) => {
+      const _start = performance.now();
+      await db.transaction().execute(async trx => {
+        await trx.insertInto('workers').values(batch.map(b => ({
+          ...b,
+          id: sql`gen_random_uuid()`,
+        }))).onConflict(c => c.column('email').doNothing()).execute();
+      });
+      const duration = performance.now() - _start;
+      durations.push(duration);
+      processed += batch.length;
+      logger.info(`Inserted ${processed}/${rows.length} rows in ${duration}ms`);
+    };
+
+    // Process batches with controlled concurrency
+    for (let i = 0; i < batches.length; i += concurrency) {
+      const batchSlice = batches.slice(i, i + concurrency);
+      await Promise.all(batchSlice.map(batch => processBatch(batch)));
+    }
+
+    const totalDuration = performance.now() - start;
+    const averageTotalInsertTime = durations.reduce((a, b) => a + b, 0) / durations.length;
+
+    logger.info(`Inserted ${rows.length} rows in ${totalDuration}ms`);
+    logger.info(`Average insert time: ${averageTotalInsertTime}ms`);
+  } catch (e) {
+    logger.error({
+      error: e
+    });
+    process.exit(1);
+  } finally {
+    await db.destroy();
+  }
+}

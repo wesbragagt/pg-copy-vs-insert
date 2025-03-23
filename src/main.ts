@@ -1,4 +1,4 @@
-import { handleInsert, handleBulkInsert } from './insert.ts'
+import { handleInsert, handleBulkInsert, handleBulkInsertParallel } from './insert.ts'
 import { handleCopyInsert, handleCopyUpdate } from './copy.ts'
 import { createCSV, createCsvWithDuplicateData } from './csv.ts';
 
@@ -9,6 +9,7 @@ dotenv.config();
 const Arguments = Object.freeze({
   Insert: "insert",
   BulkInsert: "bulk-insert",
+  BulkInsertParallel: "bulk-insert-parallel",
   Copy: "copy",
   CopyUpdate: "copy-update",
   CreateCSV: "create-csv",
@@ -33,8 +34,15 @@ async function main() {
       break;
     }
     case Arguments.BulkInsert: {
-      await handleBulkInsert(process.env.BATCH_SIZE ? parseInt(process.env.BATCH_SIZE) : 1)
+      await handleBulkInsert(process.env.BATCH_SIZE ? Number(process.env.BATCH_SIZE) : 1)
       break;
+    }
+    case Arguments.BulkInsertParallel: {
+      await handleBulkInsertParallel(
+        process.env.BATCH_SIZE ? Number(process.env.BATCH_SIZE) : 1,
+        process.env.CONCURRENCY ? Number(process.env.CONCURRENCY) : 1
+      )
+      break
     }
     case Arguments.Copy: {
       await handleCopyInsert()
