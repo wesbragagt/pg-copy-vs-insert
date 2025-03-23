@@ -1,10 +1,9 @@
-import { Kysely, PostgresDialect } from 'kysely'
-import pg from 'pg'
-import { DB } from './generated/db/types'
+import { Kysely, sql } from 'kysely'
+import type { DB } from './generated/db/types.ts'
 import postgres from 'postgres'
 import { PostgresJSDialect } from 'kysely-postgres-js'
 
-export class KyselyDB {
+export class Database {
   db: Kysely<DB>
 
   constructor() {
@@ -14,17 +13,8 @@ export class KyselyDB {
       }),
     })
   }
-}
 
-export async function getDB() {
-  const { db } = new KyselyDB();
-
-  return {
-    db,
-    [Symbol.asyncDispose]: async () => {
-      await db.destroy();
-      console.log("DB connection closed")
-    }
+  cleanUpRecords = async () => {
+    await this.db.deleteFrom('workers').execute()
   }
 }
-

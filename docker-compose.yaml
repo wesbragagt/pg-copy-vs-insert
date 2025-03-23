@@ -1,20 +1,29 @@
 services:
   migrations:
+    depends_on:
+      - db
     build:
       target: migrations
       context: .
     working_dir: /app
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/app
     command: ["npx", "prisma", "migrate", "deploy"]
     volumes:
       - ./prisma:/app/prisma
   db:
+    image: postgres:16.4-alpine
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "postgres", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     mem_limit: 2048m
     cpus: 2
 
-    image: postgres:16.4
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      POSTGRES_DB: app
     ports:
       - "8000:5432"

@@ -1,15 +1,17 @@
-import { getDB } from "./db";
-import { logger } from "./logger";
-import { extractDataFromCsv } from "./csv";
-import { Selectable, sql } from "kysely";
-import { workers } from "./generated/db/types";
+import { Database } from "./db.ts";
+import { logger } from "./logger.ts";
+import { extractDataFromCsv } from "./csv.ts";
+import { type Selectable, sql } from "kysely";
+import type { workers } from "./generated/db/types.ts";
+import path from "path";
+import { getCurrentDir } from "./utils.ts";
+import { Files } from "./constants.ts";
 
 export async function handleInsert() {
-  await using dbClient = await getDB();
-  const { db } = dbClient
+  const { db } = new Database()
   // Read from ./workers.csv and insert into the database line by line
   const start = performance.now();
-  const { headers, rows } = extractDataFromCsv();
+  const { rows } = extractDataFromCsv(path.join(getCurrentDir(), Files.WORKERS));
   logger.info({
     message: 'File read in',
     time: performance.now() - start,
@@ -45,7 +47,7 @@ export async function handleInsert() {
         state: state,
         zip: zip,
         country: country,
-      }).onConflict(c => c.column('name').doNothing()).execute();
+      }).onConflict(c => c.column('email').doNothing()).execute();
       const _end = performance.now();
       const duration = _end - _start;
       durations.push(duration);
@@ -64,15 +66,16 @@ export async function handleInsert() {
       error: e
     })
     process.exit(1);
+  }finally{
+    await db.destroy();
   }
 }
 
 export async function handleBulkInsert(batchSize: number) {
-  await using dbClient = await getDB();
-  const { db } = dbClient
+  const { db } = new Database()
   // Read from ./workers.csv and insert into the database line by line
   const start = performance.now();
-  const { headers, rows } = extractDataFromCsv();
+  const { headers, rows } = extractDataFromCsv(path.join(getCurrentDir(), Files.WORKERS));
   logger.info({
     message: 'File read in',
     time: performance.now() - start,
@@ -115,7 +118,7 @@ export async function handleBulkInsert(batchSize: number) {
           await trx.insertInto('workers').values(batch.map(b => ({
             ...b,
             id: sql`gen_random_uuid()`,
-          }))).onConflict(c => c.column('name').doNothing()).execute()
+          }))).onConflict(c => c.column('email').doNothing()).execute()
         }).catch(e => {
           logger.error({
             error: e
@@ -138,7 +141,7 @@ export async function handleBulkInsert(batchSize: number) {
         await trx.insertInto('workers').values(batch.map(b => ({
           ...b,
           id: sql`gen_random_uuid()`,
-        }))).onConflict(c => c.column('name').doNothing()).execute()
+        }))).onConflict(c => c.column('email').doNothing()).execute()
       });
       const _end = performance.now();
       const duration = _end - _start;
@@ -155,5 +158,8 @@ export async function handleBulkInsert(batchSize: number) {
       error: e
     })
     process.exit(1);
+  }
+  finally{
+    await db.destroy();
   }
 }

@@ -10,7 +10,6 @@
   zip           String
   country       String
  * */
-
 import { faker } from '@faker-js/faker';
 
 export function createWorker() {
