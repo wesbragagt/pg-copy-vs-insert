@@ -4,8 +4,10 @@ import { extractDataFromCsv } from "./csv.ts";
 import { type Selectable, sql } from "kysely";
 import type { workers } from "./generated/db/types.ts";
 import path from "path";
-import { getCurrentDir } from "./utils.ts";
+import { getCurrentDir, measureDuration } from "./utils.ts";
 import { Files } from "./constants.ts";
+import { formatDuration } from "date-fns";
+import { measureMemory } from "vm";
 
 export async function handleInsert() {
   const { db } = new Database()
@@ -55,12 +57,10 @@ export async function handleInsert() {
 
       logger.info(`Inserted ${processed}/${rows.length} rows in ${duration}ms`);
     }
-    const totalDuration = performance.now() - start;
 
-    const averageTotalInsertTime = durations.reduce((a, b) => a + b, 0) / durations.length;
+    const totalDuration = measureDuration(performance.now() - start);
 
-    logger.info(`Inserted ${rows.length} rows in ${totalDuration}ms`);
-    logger.info(`Average insert time: ${averageTotalInsertTime}ms`);
+    logger.info(`Inserted ${rows.length} rows in ${totalDuration}`);
   } catch (e) {
     logger.error({
       error: e
@@ -150,9 +150,8 @@ export async function handleBulkInsert(batchSize: number) {
 
       logger.info(`Inserted ${processed}/${rows.length} rows in ${duration}ms`);
     }
-    const averageTotalInsertTime = durations.reduce((a, b) => a + b, 0) / durations.length;
-    logger.info(`Inserted ${rows.length} rows in ${performance.now() - start}ms`);
-    logger.info(`Average insert time: ${averageTotalInsertTime}ms`);
+    const totalDuration = measureDuration(performance.now() - start);
+    logger.info(`Inserted ${rows.length} rows in ${totalDuration}`);
   } catch (e) {
     logger.error({
       error: e
@@ -242,11 +241,8 @@ export async function handleBulkInsertParallel(batchSize: number, concurrency: n
       await Promise.all(batchSlice.map(batch => processBatch(batch)));
     }
 
-    const totalDuration = performance.now() - start;
-    const averageTotalInsertTime = durations.reduce((a, b) => a + b, 0) / durations.length;
-
-    logger.info(`Inserted ${rows.length} rows in ${totalDuration}ms`);
-    logger.info(`Average insert time: ${averageTotalInsertTime}ms`);
+    const totalDuration = measureDuration(performance.now() - start);
+    logger.info(`Inserted ${rows.length} rows in ${totalDuration}`);
   } catch (e) {
     logger.error({
       error: e
