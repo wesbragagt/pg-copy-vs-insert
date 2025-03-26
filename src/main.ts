@@ -1,4 +1,4 @@
-import { handleInsert, handleBulkInsert, handleBulkInsertParallel } from './insert.ts'
+import { handleInsertOneByOne, handleBulkInsert, handleBulkInsertParallel } from './insert.ts'
 import { handleCopyInsert, handleCopyUpdate } from './copy.ts'
 import { createCSV, createCsvWithDuplicateData } from './csv.ts';
 
@@ -30,7 +30,7 @@ async function main() {
 
   switch (process.argv[2]) {
     case Arguments.Insert: {
-      await handleInsert()
+      await handleInsertOneByOne()
       break;
     }
     case Arguments.BulkInsert: {

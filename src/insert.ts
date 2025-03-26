@@ -6,12 +6,9 @@ import type { workers } from "./generated/db/types.ts";
 import path from "path";
 import { getCurrentDir, measureDuration } from "./utils.ts";
 import { Files } from "./constants.ts";
-import { formatDuration } from "date-fns";
-import { measureMemory } from "vm";
 
-export async function handleInsert() {
+export async function handleInsertOneByOne() {
   const { db } = new Database()
-  // Read from ./workers.csv and insert into the database line by line
   const start = performance.now();
   const { rows } = extractDataFromCsv(path.join(getCurrentDir(), Files.WORKERS));
   logger.info({
@@ -38,7 +35,7 @@ export async function handleInsert() {
         country
       ] = row.split(',');
 
-      const _start = performance.now();
+      const start = performance.now();
       await db.insertInto('workers').values({
         id: sql`gen_random_uuid()`,
         name: name,
@@ -50,8 +47,8 @@ export async function handleInsert() {
         zip: zip,
         country: country,
       }).onConflict(c => c.column('email').doNothing()).execute();
-      const _end = performance.now();
-      const duration = _end - _start;
+      const end = performance.now();
+      const duration = end - start;
       durations.push(duration);
       processed++;
 
@@ -113,7 +110,7 @@ export async function handleBulkInsert(batchSize: number) {
       });
 
       if (batch.length === batchSize) {
-        const _start = performance.now();
+        const start = performance.now();
         await db.transaction().execute(async trx => {
           await trx.insertInto('workers').values(batch.map(b => ({
             ...b,
@@ -125,8 +122,8 @@ export async function handleBulkInsert(batchSize: number) {
           });
           process.exit(1);
         });
-        const _end = performance.now();
-        const duration = _end - _start;
+        const end = performance.now();
+        const duration = end - start;
         durations.push(duration);
         processed += batchSize;
 
@@ -136,15 +133,15 @@ export async function handleBulkInsert(batchSize: number) {
     }
 
     if (batch.length > 0) {
-      const _start = performance.now();
+      const start = performance.now();
       await db.transaction().execute(async trx => {
         await trx.insertInto('workers').values(batch.map(b => ({
           ...b,
           id: sql`gen_random_uuid()`,
         }))).onConflict(c => c.column('email').doNothing()).execute()
       });
-      const _end = performance.now();
-      const duration = _end - _start;
+      const end = performance.now();
+      const duration = end - start;
       durations.push(duration);
       processed += batch.length;
 
@@ -222,14 +219,14 @@ export async function handleBulkInsertParallel(batchSize: number, concurrency: n
 
     // Process batches in parallel with controlled concurrency
     const processBatch = async (batch: typeof currentBatch) => {
-      const _start = performance.now();
+      const start = performance.now();
       await db.transaction().execute(async trx => {
         await trx.insertInto('workers').values(batch.map(b => ({
           ...b,
           id: sql`gen_random_uuid()`,
         }))).onConflict(c => c.column('email').doNothing()).execute();
       });
-      const duration = performance.now() - _start;
+      const duration = performance.now() - start;
       durations.push(duration);
       processed += batch.length;
       logger.info(`Inserted ${processed}/${rows.length} rows in ${duration}ms`);
