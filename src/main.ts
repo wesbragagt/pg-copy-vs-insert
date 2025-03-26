@@ -1,5 +1,5 @@
 import { handleInsertOneByOne, handleBulkInsert, handleBulkInsertParallel } from './insert.ts'
-import { handleCopyInsert, handleCopyUpdate } from './copy.ts'
+import { copyInsertStreamed, handleCopyInsert, handleCopyUpdate } from './copy.ts'
 import { createCSV, createCsvWithDuplicateData } from './csv.ts';
 
 import dotenv from 'dotenv'
@@ -12,6 +12,7 @@ const Arguments = Object.freeze({
   BulkInsertParallel: "bulk-insert-parallel",
   Copy: "copy",
   CopyUpdate: "copy-update",
+  CopyStreamed: "copy-streamed",
   CreateCSV: "create-csv",
   CreateCSVWithDups: "create-csv-dups"
 });
@@ -58,6 +59,10 @@ async function main() {
     }
     case Arguments.CreateCSVWithDups: {
       createCsvWithDuplicateData()
+      break;
+    }
+    case Arguments.CopyStreamed: {
+      copyInsertStreamed()
       break;
     }
     default: {

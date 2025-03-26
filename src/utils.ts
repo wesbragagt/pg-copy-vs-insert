@@ -1,3 +1,4 @@
+import type { Logger } from "pino";
 import type { CreateWorker } from "./interfaces.ts";
 
 export function measureDuration(milliseconds: number) /*hh:mm:ss*/ {
@@ -29,4 +30,13 @@ export function deduplicateByEmail(w: CreateWorker[]){
     emailMap.set(worker.email, worker);
   }
   return Array.from(emailMap.values());
+}
+
+export function getMemoryUsageDetails(_process = process){
+  const memoryUsage = _process.memoryUsage();
+  const memoryRssInMB = memoryUsage.rss / 1024 / 1024;
+  const memoryHeapTotalInMB = memoryUsage.heapTotal / 1024 / 1024;
+  const memoryHeapUsedInMB = memoryUsage.heapUsed / 1024 / 1024;
+
+  return `rss: ${memoryRssInMB.toFixed(2)}MB, heapTotal: ${memoryHeapTotalInMB.toFixed(2)}MB, heapUsed: ${memoryHeapUsedInMB.toFixed(2)}MB`;
 }
